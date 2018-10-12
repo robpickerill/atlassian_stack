@@ -61,7 +61,7 @@ services:
       - nginx
       - postgres
     volumes:
-      - mattermost_data:/mattermost/data
+      - mattermost_data:/mattermost-data
       - mattermost_sql:/var/lib/mysql
 
   nextcloud:
