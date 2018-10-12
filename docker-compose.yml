@@ -60,6 +60,9 @@ services:
     networks:
       - nginx
       - postgres
+    volumes:
+      - mattermost_data:/mattermost/data
+      - mattermost_sql:/var/lib/mysql
 
   nextcloud:
     depends_on:
@@ -88,3 +91,5 @@ volumes:
   nextcloud:
   confluence:
   jira:
+  mattermost_data:
+  mattermost_sql:
