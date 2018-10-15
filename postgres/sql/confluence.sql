@@ -1,4 +1,4 @@
 CREATE USER confluence WITH ENCRYPTED PASSWORD 'confluence';
-CREATE DATABASE confluence;
+CREATE DATABASE confluencedb;
 
-GRANT ALL PRIVILEGES ON DATABASE confluence TO confluence;
+GRANT ALL PRIVILEGES ON DATABASE confluencedb TO confluence;
