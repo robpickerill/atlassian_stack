@@ -9,6 +9,7 @@ services:
       - mattermost
       - confluence
       - jira
+      - logstash
     image: nginx:${NGINX_VERSION}
     restart: always
     ports:
@@ -19,8 +20,14 @@ services:
     volumes:
       - ./nginx/conf.d/:/etc/nginx/conf.d/:ro
       - nextcloud:/var/www/html:ro
+    logging:
+      driver: gelf
+      options:
+        gelf-address: udp://127.0.0.1:12201
 
   postgres:
+    depends_on: 
+      - logstash
     image: postgres:${POSTGRES_VERSION}
     restart: always
     networks:
@@ -31,10 +38,15 @@ services:
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    logging:
+      driver: gelf
+      options:
+        gelf-address: udp://127.0.0.1:12201
 
   jira:
     depends_on:
       - postgres
+      - logstash
     image: cptactionhank/atlassian-jira-software:${JIRA_VERSION}
     restart: always
     networks:
@@ -46,10 +58,15 @@ services:
       - X_PROXY_NAME=${JIRA_X_PROXY_NAME}
       - X_PROXY_PORT=${JIRA_X_PROXY_PORT}
       - X_PROXY_SCHEME=${JIRA_X_PROXY_SCHEME}
+    logging:
+      driver: gelf
+      options:
+        gelf-address: udp://127.0.0.1:12201
 
   confluence:
     depends_on:
       - postgres
+      - logstash
     image: atlassian/confluence-server:${CONFLUENCE_VERSION}
     restart: always
     networks:
@@ -62,10 +79,15 @@ services:
       - CATALINA_CONNECTOR_PROXYPORT=${CONFLUENCE_CATALINA_CONNECTOR_PROXYPORT}
       - CATALINA_CONNECTOR_SCHEME=${CONFLUENCE_CATALINA_CONNECTOR_SCHEME}
       - CATALINA_CONNECTOR_SECURE=${CONFLUENCE_CATALINA_CONNECTOR_SECURE}
+    logging:
+      driver: gelf
+      options:
+        gelf-address: udp://127.0.0.1:12201
 
   mattermost:
     depends_on:
       - postgres
+      - logstash
     image: mattermost/platform:${MATTERMOST_VERSION}
     restart: always
     networks:
@@ -74,10 +96,15 @@ services:
     volumes:
       - mattermost_data:/mattermost-data
       - mattermost_sql:/var/lib/mysql
+    logging:
+      driver: gelf
+      options:
+        gelf-address: udp://127.0.0.1:12201
 
   nextcloud:
     depends_on:
       - postgres
+      - logstash
     image: nextcloud:fpm
     restart: always
     networks:
@@ -93,10 +120,58 @@ services:
       - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER}
       - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_USER}
       - NEXTCLOUD_VIRTUAL_HOST=${NEXTCLOUD_VIRTUAL_HOST}
+    logging:
+      driver: gelf
+      options:
+        gelf-address: udp://127.0.0.1:12201
+
+  logstash:
+    depends_on:
+      - elasticsearch
+    image: docker.elastic.co/logstash/logstash:6.4.3
+    restart: always
+    volumes:
+      - ./logstash/:/usr/share/logstash/pipeline/
+    ports:
+      - 12201:12201
+    networks:
+      - elk
+      - postgres
+      - nginx
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.4.3
+    environment:
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - elk
+
+  kibana:
+    depends_on:
+      - elasticsearch
+    image: docker.elastic.co/kibana/kibana:6.4.3
+    # environment:
+    #   SERVER_NAME: elasticsearch
+    #   ELASTICSEARCH_URL: http://localhost
+    ports:
+      - 5601:5601
+    networks:
+      - elk
 
 networks:
   nginx:
   postgres:
+  elk:
 
 volumes:
   postgres:
@@ -105,3 +180,4 @@ volumes:
   jira:
   mattermost_data:
   mattermost_sql:
+  elasticsearch:
