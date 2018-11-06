@@ -20,10 +20,6 @@ services:
     volumes:
       - ./nginx/conf.d/:/etc/nginx/conf.d/:ro
       - nextcloud:/var/www/html:ro
-    logging:
-      driver: gelf
-      options:
-        gelf-address: udp://127.0.0.1:12201
 
   postgres:
     depends_on: 
@@ -41,7 +37,7 @@ services:
     logging:
       driver: gelf
       options:
-        gelf-address: udp://127.0.0.1:12201
+        gelf-address: udp://192.168.1.174:12201
 
   jira:
     depends_on:
@@ -61,7 +57,7 @@ services:
     logging:
       driver: gelf
       options:
-        gelf-address: udp://127.0.0.1:12201
+        gelf-address: udp://192.168.1.174:12201
 
   confluence:
     depends_on:
@@ -82,7 +78,7 @@ services:
     logging:
       driver: gelf
       options:
-        gelf-address: udp://127.0.0.1:12201
+        gelf-address: udp://192.168.1.174:12201
 
   mattermost:
     depends_on:
@@ -99,7 +95,7 @@ services:
     logging:
       driver: gelf
       options:
-        gelf-address: udp://127.0.0.1:12201
+        gelf-address: udp://192.168.1.174:12201
 
   nextcloud:
     depends_on:
@@ -119,11 +115,7 @@ services:
       - POSTGRES_HOST=${NEXTCLOUD_POSTGRES_HOST}
       - NEXTCLOUD_ADMIN_USER=${NEXTCLOUD_ADMIN_USER}
       - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_USER}
-      - NEXTCLOUD_VIRTUAL_HOST=${NEXTCLOUD_VIRTUAL_HOST}
-    logging:
-      driver: gelf
-      options:
-        gelf-address: udp://127.0.0.1:12201
+      - NEXTCLOUD_TRUSTED_DOMAINS=${NEXTCLOUD_VIRTUAL_HOST}
 
   logstash:
     depends_on:
